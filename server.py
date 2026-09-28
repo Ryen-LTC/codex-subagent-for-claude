@@ -20,7 +20,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 
 STATE_DIR = Path(os.environ.get("CODEX_SUB_STATE_DIR") or (
     Path(os.environ.get("LOCALAPPDATA", Path.home())) / "codex-sub"))
