@@ -20,7 +20,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
 STATE_DIR = Path(os.environ.get("CODEX_SUB_STATE_DIR") or (
     Path(os.environ.get("LOCALAPPDATA", Path.home())) / "codex-sub"))
@@ -684,40 +684,64 @@ _SPAWN_SCHEMA = {
 TOOLS = [
     {"name": "codex_spawn",
      "description": (
-         "把一个任务派给 Codex 子代理，立即返回任务 id（wait_s>0 时先等一会儿，等到就直接给结果）。"
+         "把一个任务派给 Codex 子代理，立即返回 8 位任务 id（wait_s>0 时先等一会儿，等到就直接给结果）。"
          "可以连续派多个，它们在同一个常驻 Codex 进程里并行执行。任务完成后结果会自动送回本会话；"
          "也可以用 codex_wait 主动等、codex_status 看进度、codex_steer 中途改方向、codex_interrupt 中断。"
-         "传 thread_id 可在旧任务的上下文上续问。"),
-     "inputSchema": _SPAWN_SCHEMA},
+         "传 thread_id 可在旧任务的上下文上续问；该 thread 上不能有仍在运行的任务。"
+         "默认无沙箱、不审批：Codex 会直接改文件、跑命令。"),
+     "inputSchema": _SPAWN_SCHEMA,
+     "annotations": {"readOnlyHint": False, "destructiveHint": True, "idempotentHint": False, "openWorldHint": True}},
     {"name": "codex_review",
      "description": (
-         "用 Codex 内置的代码审查模式（等价于 `codex review`，只读、以找缺陷为主）审查改动，返回带文件行号的问题列表。"
-         "scope=uncommitted 审工作区未提交改动；base_branch 审当前分支相对基准分支的改动（value=分支名）；"
-         "commit 审某个提交（value=sha）；custom 按自定义说明审（value=说明）。异步/等待语义同 codex_spawn。"),
+         "用 Codex 内置的代码审查模式（等价于 `codex review`）审查改动，固定只读、以找缺陷为主，"
+         "返回按严重度排序、带文件行号的问题列表。scope=uncommitted 审工作区未提交改动；"
+         "base_branch 审当前分支相对基准分支的改动（value=分支名）；commit 审某个提交（value=sha）；"
+         "custom 按自定义说明审（value=说明）。异步/等待语义同 codex_spawn，也返回任务 id。"
+         "想让 Codex 改代码用 codex_spawn，只想让它挑毛病用这个。"),
      "inputSchema": {"type": "object", "properties": {
-         "scope": {"type": "string", "enum": ["uncommitted", "base_branch", "commit", "custom"], "description": "默认 uncommitted"},
-         "value": {"type": "string", "description": "分支名 / commit sha / 自定义审查说明"},
-         "cwd": {"type": "string", "description": "仓库目录（绝对路径），默认当前目录"},
-         "wait_s": {"type": "number", "description": "先同步等待的秒数，审查通常 1~3 分钟"},
-         "model": {"type": "string"}, "detach": {"type": "boolean"}}}},
+         "scope": {"type": "string", "enum": ["uncommitted", "base_branch", "commit", "custom"], "description": "审查范围，默认 uncommitted"},
+         "value": {"type": "string", "description": "scope 对应的值：分支名 / commit sha / 自定义审查说明；uncommitted 不需要"},
+         "cwd": {"type": "string", "description": "git 仓库目录（绝对路径），默认当前目录"},
+         "wait_s": {"type": "number", "description": "先同步等待的秒数，审查通常 1~3 分钟；0 立即返回"},
+         "model": {"type": "string", "description": "仅用户明确指定时填"},
+         "detach": {"type": "boolean", "description": "true = 不关心结果，Claude 结束回合时不等它"}}},
+     "annotations": {"readOnlyHint": True, "destructiveHint": False, "idempotentHint": False, "openWorldHint": True}},
     {"name": "codex_wait",
-     "description": "等待任务完成并返回结果。不传 ids 就等全部运行中的任务。超时只是返回当前状态，任务不会被杀。",
+     "description": (
+         "阻塞等待一个或多个任务结束并返回它们的结果。不传 ids 就等本会话全部运行中的任务。"
+         "超时只是返回当前状态，任务不会被杀，可以再次调用继续等。已结束的任务立即返回。"
+         "等待期间每 10 秒发一次进度通知。只想看一眼不想等，用 codex_status。"),
      "inputSchema": {"type": "object", "properties": {
-         "ids": {"type": "array", "items": {"type": "string"}},
-         "timeout": {"type": "number", "description": f"秒，默认 {DEFAULT_WAIT_TIMEOUT}"},
-         "mode": {"type": "string", "enum": ["all", "any"], "description": "all=全部完成才返回，any=任一完成就返回"}}}},
+         "ids": {"type": "array", "items": {"type": "string"}, "description": "任务 id 列表（codex_spawn / codex_review 返回的 8 位 id）；省略 = 全部运行中的任务"},
+         "timeout": {"type": "number", "description": f"最长等待秒数，默认 {DEFAULT_WAIT_TIMEOUT}，上限 {MAX_WAIT_S}"},
+         "mode": {"type": "string", "enum": ["all", "any"], "description": "all=全部结束才返回（默认），any=任一结束就返回"}}},
+     "annotations": {"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False}},
     {"name": "codex_status",
-     "description": "不传 ids：一行一个列出本会话全部任务及状态。传 ids：看详情——运行中的显示最近动作、改动文件、输出预览；已结束的显示结果（超过 6000 字截断，full=true 看全文）。",
+     "description": (
+         "立即返回，不等待。不传 ids：一行一个列出本会话全部任务及状态。传 ids：看详情——"
+         "运行中的显示最近动作、改动文件、输出预览；已结束的显示完整结果（超过 6000 字截断，full=true 看全文）。"
+         "被 codex_interrupt 中断的任务，其已产出的部分也从这里取。"),
      "inputSchema": {"type": "object", "properties": {
-         "ids": {"type": "array", "items": {"type": "string"}},
-         "full": {"type": "boolean"}}}},
+         "ids": {"type": "array", "items": {"type": "string"}, "description": "任务 id 列表；省略 = 只列清单"},
+         "full": {"type": "boolean", "description": "true = 不截断，返回完整结果文本"}}},
+     "annotations": {"readOnlyHint": True, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False}},
     {"name": "codex_steer",
-     "description": "给运行中的任务追加/修正指令，Codex 会在当前步骤后转向，不用重来。",
+     "description": (
+         "给一个正在运行的任务追加或修正指令，Codex 在当前步骤结束后转向，不用重来，已做的工作保留。"
+         "只对运行中的任务有效；任务已结束时报错，此时应改用 codex_spawn(thread_id=...) 续问。"
+         "想让它停下来而不是转向，用 codex_interrupt。"),
      "inputSchema": {"type": "object", "required": ["id", "prompt"], "properties": {
-         "id": {"type": "string"}, "prompt": {"type": "string"}}}},
+         "id": {"type": "string", "description": "运行中任务的 8 位 id（codex_spawn 返回的）"},
+         "prompt": {"type": "string", "description": "追加的指令，只写增量，不用重复原任务"}}},
+     "annotations": {"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": False}},
     {"name": "codex_interrupt",
-     "description": "中断运行中的任务，保留已完成的部分输出和文件改动。",
-     "inputSchema": {"type": "object", "required": ["id"], "properties": {"id": {"type": "string"}}}},
+     "description": (
+         "中断一个正在运行的任务：Codex 收到后立即停止，已完成的部分输出和文件改动保留，任务状态变为 interrupted，"
+         "结果可用 codex_status 查看。对已结束的任务调用无副作用，直接返回其结果。"
+         "被中断的 thread 之后仍可用 codex_spawn(thread_id=...) 续问。只想改方向不想停，用 codex_steer。"),
+     "inputSchema": {"type": "object", "required": ["id"], "properties": {
+         "id": {"type": "string", "description": "任务的 8 位 id（codex_spawn / codex_review 返回的）"}}},
+     "annotations": {"readOnlyHint": False, "destructiveHint": False, "idempotentHint": True, "openWorldHint": False}},
 ]
 
 HANDLERS = {
