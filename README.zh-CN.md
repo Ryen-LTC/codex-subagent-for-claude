@@ -2,6 +2,8 @@
 
 [English](README.md) | 简体中文
 
+[![codex-subagent-for-claude MCP server](https://glama.ai/mcp/servers/Ryen-LTC/codex-subagent-for-claude/badges/score.svg)](https://glama.ai/mcp/servers/Ryen-LTC/codex-subagent-for-claude) [![ci](https://github.com/Ryen-LTC/codex-subagent-for-claude/actions/workflows/ci.yml/badge.svg)](https://github.com/Ryen-LTC/codex-subagent-for-claude/actions/workflows/ci.yml)
+
 在 Claude Code 里把 Codex 当子代理用：Claude 派任务，Codex 在后台跑，结果自动回到 Claude 的对话里。
 
 两个 Python 文件，没有第三方依赖。目前只在 Windows 11 上验证过。
@@ -95,7 +97,7 @@ claude mcp add codex-sub -s user -- python "<安装目录>\server.py"
 - 依赖 `codex app-server` 的部分 experimental 接口，Codex 更新可能改协议；在 Codex 0.157 / 0.158 上验证
 - 每个 Claude 会话常驻一个 app-server 进程（约 150 MB），会话结束随之退出
 
-测试：`python tests/smoke.py`（会真的调 Codex，约 3 分钟）。
+测试：`python tests/handshake.py`（不需要 Codex，几秒）和 `python tests/smoke.py`（会真的调 Codex，约 3 分钟）。
 
 卸载：`claude mcp remove codex-sub -s user`，再删掉 settings.json 里的三条 hook。
 

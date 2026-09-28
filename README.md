@@ -2,6 +2,8 @@
 
 English | [简体中文](README.zh-CN.md)
 
+[![codex-subagent-for-claude MCP server](https://glama.ai/mcp/servers/Ryen-LTC/codex-subagent-for-claude/badges/score.svg)](https://glama.ai/mcp/servers/Ryen-LTC/codex-subagent-for-claude) [![ci](https://github.com/Ryen-LTC/codex-subagent-for-claude/actions/workflows/ci.yml/badge.svg)](https://github.com/Ryen-LTC/codex-subagent-for-claude/actions/workflows/ci.yml)
+
 Use Codex as a subagent inside Claude Code: Claude delegates a task, Codex works on it in the background, and the result comes back into Claude's conversation on its own.
 
 Two Python files, no third-party dependencies. Currently verified on Windows 11 only.
@@ -95,7 +97,7 @@ If that's not acceptable: set `CODEX_SUB_SANDBOX=read-only`, or pass `sandbox=re
 - Relies on some experimental `codex app-server` APIs; Codex updates may change the protocol. Verified with Codex 0.157 / 0.158
 - Each Claude session keeps one app-server process alive (~150 MB); it exits with the session
 
-Tests: `python tests/smoke.py` (calls Codex for real, about 3 minutes).
+Tests: `python tests/handshake.py` (no Codex needed, seconds) and `python tests/smoke.py` (calls Codex for real, about 3 minutes).
 
 Uninstall: `claude mcp remove codex-sub -s user`, then remove the three hooks from settings.json.
 
