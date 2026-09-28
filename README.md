@@ -77,7 +77,7 @@ Just talk to Claude; it knows when to delegate:
 
 ## Permissions
 
-Subagents run **without a sandbox** by default (`danger-full-access`) and every approval request from Codex is declined automatically — they can edit any file and run any command without stopping to ask. The reason: Codex's Windows sandbox runs commands under a restricted account that cannot see tools installed in the user profile (Python, pnpm, uv, …), so a sandboxed subagent can't even run tests.
+Subagents run **without a sandbox** (`sandbox=danger-full-access`) and **without approvals** (`approvalPolicy=never`) by default: they can edit any file and run any command without stopping to ask, and the occasional question that would need a human answer is skipped so the task never hangs waiting for one. The reason: Codex's Windows sandbox runs commands under a restricted account that cannot see tools installed in the user profile (Python, pnpm, uv, …), so a sandboxed subagent can't even run tests.
 
 If that's not acceptable: set `CODEX_SUB_SANDBOX=read-only`, or pass `sandbox=read-only` per task. `codex_review` is always read-only.
 

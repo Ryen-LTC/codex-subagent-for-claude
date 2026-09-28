@@ -77,7 +77,7 @@ claude mcp add codex-sub -s user -- python "<安装目录>\server.py"
 
 ## 权限
 
-子代理默认**不带沙箱**（`danger-full-access`），Codex 发来的审批请求全部自动拒绝——它能改任何文件、跑任何命令、不会停下来问你。这么设是因为 Codex 的 Windows 沙箱用受限账户执行命令，读不到装在用户目录下的 Python、pnpm、uv 等工具，子代理连测试都跑不了。
+子代理默认**不带沙箱**（`sandbox=danger-full-access`）且**不审批**（`approvalPolicy=never`）：能改任何文件、跑任何命令，不会停下来问你；偶尔遇到需要人回答的追问会自动跳过，让它自己决定，任务不会卡住等人。这么设是因为 Codex 的 Windows 沙箱用受限账户执行命令，读不到装在用户目录下的 Python、pnpm、uv 等工具，子代理连测试都跑不了。
 
 不接受这个默认：设 `CODEX_SUB_SANDBOX=read-only`，或按任务传 `sandbox=read-only`。`codex_review` 固定只读。
 
