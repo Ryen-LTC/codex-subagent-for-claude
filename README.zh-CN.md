@@ -13,7 +13,7 @@
 - 异步派发：`codex_spawn` 立即返回，Claude 接着干自己的事。多个任务在同一个常驻的 Codex 进程里并行，不用每次冷启动
 - 结果自动送回：Codex 做完后，结果在 Claude 下一次动作时出现在对话里，不用轮询。Claude 结束回合前会先收齐还没送回的结果
 - 中途干预：`codex_steer` 追加指令，Codex 在当前步骤后转向；`codex_interrupt` 中断，已做完的部分保留；带 `thread_id` 可以接着问
-- 代码审查：`codex_review` 调 Codex 自带的审查模式，只读、找缺陷、带文件行号
+- 代码审查：`codex_review` 调 Codex 自带的审查模式，不改文件、找缺陷、带文件行号
 - 多窗口隔离：每个 Claude 窗口一个独立的 Codex 进程
 - 模型独立：子代理默认 `gpt-6-sol` / 推理强度 `high` / 标准服务档，不受 Codex 桌面聊天设置影响；环境变量改默认值，也可以按任务传参
 
@@ -81,7 +81,7 @@ claude mcp add codex-sub -s user -- python "<安装目录>\server.py"
 
 子代理默认**不带沙箱**（`sandbox=danger-full-access`）且**不审批**（`approvalPolicy=never`）：能改任何文件、跑任何命令，不会停下来问你；偶尔遇到需要人回答的追问会自动跳过，让它自己决定，任务不会卡住等人。这么设是因为 Codex 的 Windows 沙箱用受限账户执行命令，读不到装在用户目录下的 Python、pnpm、uv 等工具，子代理连测试都跑不了。
 
-不接受这个默认：设 `CODEX_SUB_SANDBOX=read-only`，或按任务传 `sandbox=read-only`。`codex_review` 固定只读。
+`codex_review` 用同样的默认：审查模式本身不改文件，但要跑 `git` 等命令。`sandbox=read-only` 参数可以传，但在 Windows 上没有用——它启用的是同一个受限沙箱，沙箱里任何命令都起不来。
 
 ## 配置
 

@@ -41,7 +41,8 @@ Claude Code ──hook──> hook.py：读状态文件，注入完成结果 / S
 ## 权限
 
 - Claude 侧：工具名 `mcp__codex-sub__codex_*`。未在 `permissions.allow` 放行 `mcp__codex-sub` 时每次调用弹确认。
-- Codex 侧：默认 `sandbox=danger-full-access`（无沙箱）、`approvalPolicy=never`，Codex 发来的审批/追问一律拒绝；只读分析传 `read-only`（`codex_review` 固定只读）。默认沙箱由 `CODEX_SUB_SANDBOX` 改。
+- Codex 侧：默认 `sandbox=danger-full-access`（无沙箱）、`approvalPolicy=never`，Codex 发来的审批/追问一律拒绝。`codex_review` 用同样的默认沙箱——审查模式本身不改文件，但要跑 `git` 等命令。默认沙箱由 `CODEX_SUB_SANDBOX` 改。
+- `read-only` 不可用：它和 `workspace-write` 一样会启用 Codex 的 Windows 沙箱，沙箱里任何命令都起不来（`exec_command failed: … setup refresh had errors`），`git`、`python` 全部失败。参数保留只为完整性，工具描述里已标明。
 - 不用 `workspace-write` 的原因：Codex 的 Windows 沙箱（`[windows] sandbox = "elevated"`）用受限账户跑命令，读不到用户目录下安装的工具（`AppData\Local` 里的 Python、pnpm、uv、npm 全局包在沙箱内都不存在），子代理无法运行测试；官方只提供交互式 `/sandbox-add-read-dir`，无法从 app-server 配置。`workspace-write` 下命令能否联网另由 `[sandbox_workspace_write] network_access` 决定。
 - Codex 内置网页工具在任何 `web_search` 模式、任何沙箱下都经过 OpenAI 服务端抓取层，同一 URL 短时间内返回同一快照，带参数的 URL 和冷门站点拿不到；要真正实时抓取需让子代理跑 `curl`。
 
@@ -61,6 +62,7 @@ Claude Code ──hook──> hook.py：读状态文件，注入完成结果 / S
 - 若走 npm 的 `codex.cmd`，须用 `node codex.js` 直接调用：`CreateProcess` 找不到 `.cmd`，cmd.exe 会破坏含换行的 prompt。
 - 子进程 stdin 一律 `DEVNULL`：Windows 下 git 继承 MCP 的 stdin 管道会挂死。
 - MCP 的 stdin/stdout 强制 UTF-8，默认 GBK 会打坏中文。
+- Claude 桌面应用是 MSIX 包，它及其子进程对 `AppData\Local` / `AppData\Roaming` 的写入会被重定向到 `%LOCALAPPDATA%\Packages\Claude_*\LocalCache\`，普通终端看不到。因此状态目录在桌面会话和终端 CLI 会话里是两份（各自自洽，不会串）；在桌面会话里 `npm install -g` 装的东西终端里不存在，全局安装要在普通终端做。`%LOCALAPPDATA%\OpenAI\Codexin` 由 Codex 应用写入，不受此影响，`find_codex()` 两种会话都能找到。
 
 ## 测试
 

@@ -13,7 +13,7 @@ Two Python files, no third-party dependencies. Currently verified on Windows 11 
 - **Async dispatch**: `codex_spawn` returns immediately and Claude carries on. Multiple tasks run in parallel inside one long-lived Codex process, no cold start per task
 - **Results delivered automatically**: when Codex finishes, the result shows up in the conversation on Claude's next action, no polling. Claude collects any outstanding results before ending its turn
 - **Mid-flight control**: `codex_steer` sends a follow-up instruction and Codex changes course after its current step; `codex_interrupt` stops a task and keeps what's done; pass `thread_id` to continue a conversation
-- **Code review**: `codex_review` runs Codex's built-in review mode — read-only, defect-focused, with file and line numbers
+- **Code review**: `codex_review` runs Codex's built-in review mode — does not modify files, defect-focused, with file and line numbers
 - **Per-window isolation**: each Claude Code window gets its own Codex process
 - **Independent model settings**: subagents default to `gpt-6-sol` / reasoning effort `high` / standard service tier, unaffected by the Codex desktop chat settings; change the defaults via environment variables or override per task
 
@@ -81,7 +81,7 @@ Just talk to Claude; it knows when to delegate:
 
 Subagents run **without a sandbox** (`sandbox=danger-full-access`) and **without approvals** (`approvalPolicy=never`) by default: they can edit any file and run any command without stopping to ask, and the occasional question that would need a human answer is skipped so the task never hangs waiting for one. The reason: Codex's Windows sandbox runs commands under a restricted account that cannot see tools installed in the user profile (Python, pnpm, uv, …), so a sandboxed subagent can't even run tests.
 
-If that's not acceptable: set `CODEX_SUB_SANDBOX=read-only`, or pass `sandbox=read-only` per task. `codex_review` is always read-only.
+`codex_review` uses the same default: review mode itself does not modify files, but it needs to run `git` and similar commands. `sandbox=read-only` is accepted but not useful on Windows — it enables the same restricted sandbox, inside which no command can start at all.
 
 ## Configuration
 

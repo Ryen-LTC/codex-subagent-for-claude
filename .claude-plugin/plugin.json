@@ -1,5 +1,5 @@
 {
   "name": "codex-sub",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "在 Claude Code 里把 Codex 当子代理：异步派发、结果自动送回、可 steer/interrupt、内置代码审查"
 }
