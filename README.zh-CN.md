@@ -15,7 +15,7 @@
 - 中途干预：`codex_steer` 追加指令，Codex 在当前步骤后转向；`codex_interrupt` 中断，已做完的部分保留；带 `thread_id` 可以接着问
 - 代码审查：`codex_review` 调 Codex 自带的审查模式，不改文件、找缺陷、带文件行号
 - 多窗口隔离：每个 Claude 窗口一个独立的 Codex 进程
-- 模型独立：子代理默认 `gpt-6-sol` / 推理强度 `high` / 标准服务档，不受 Codex 桌面聊天设置影响；环境变量改默认值，也可以按任务传参
+- 模型独立：子代理默认 `gpt-6.1-sol` / 推理强度 `high` / 标准服务档，不受 Codex 桌面聊天设置影响；环境变量改默认值，也可以按任务传参（可选 GPT-6.1 Sol / GPT-6 Astra / GPT-6 Sol / GPT-6 Luna）
 
 ## 原理
 
@@ -89,7 +89,7 @@ claude mcp add codex-sub -s user -- python "<安装目录>\server.py"
 |---|---|
 | `CODEX_SUB_BIN` | 自动查找 |
 | `CODEX_SUB_SANDBOX` | `danger-full-access` |
-| `CODEX_SUB_MODEL` / `CODEX_SUB_EFFORT` / `CODEX_SUB_SERVICE_TIER` | `gpt-6-sol` / `high` / `default` |
+| `CODEX_SUB_MODEL` / `CODEX_SUB_EFFORT` / `CODEX_SUB_SERVICE_TIER` | `gpt-6.1-sol` / `high` / `default` |
 | `CODEX_SUB_STATE_DIR` | `%LOCALAPPDATA%\codex-sub`（日志和会话状态；server 与 hook 要设同一个值） |
 
 ## 说明

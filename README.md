@@ -15,7 +15,7 @@ Two Python files, no third-party dependencies. Currently verified on Windows 11 
 - **Mid-flight control**: `codex_steer` sends a follow-up instruction and Codex changes course after its current step; `codex_interrupt` stops a task and keeps what's done; pass `thread_id` to continue a conversation
 - **Code review**: `codex_review` runs Codex's built-in review mode — does not modify files, defect-focused, with file and line numbers
 - **Per-window isolation**: each Claude Code window gets its own Codex process
-- **Independent model settings**: subagents default to `gpt-6-sol` / reasoning effort `high` / standard service tier, unaffected by the Codex desktop chat settings; change the defaults via environment variables or override per task
+- **Independent model settings**: subagents default to `gpt-6.1-sol` / reasoning effort `high` / standard service tier, unaffected by the Codex desktop chat settings; change the defaults via environment variables or override per task (GPT-6.1 Sol / GPT-6 Astra / GPT-6 Sol / GPT-6 Luna)
 
 ## How it works
 
@@ -89,7 +89,7 @@ Subagents run **without a sandbox** (`sandbox=danger-full-access`) and **without
 |---|---|
 | `CODEX_SUB_BIN` | auto-detected |
 | `CODEX_SUB_SANDBOX` | `danger-full-access` |
-| `CODEX_SUB_MODEL` / `CODEX_SUB_EFFORT` / `CODEX_SUB_SERVICE_TIER` | `gpt-6-sol` / `high` / `default` |
+| `CODEX_SUB_MODEL` / `CODEX_SUB_EFFORT` / `CODEX_SUB_SERVICE_TIER` | `gpt-6.1-sol` / `high` / `default` |
 | `CODEX_SUB_STATE_DIR` | `%LOCALAPPDATA%\codex-sub` (logs and session state; server and hook must use the same value) |
 
 ## Notes

@@ -36,7 +36,7 @@ Claude Code ──hook──> hook.py：读状态文件，注入完成结果 / S
 - initialize 返回 `instructions`（何时派、prompt 怎么写、结果怎么处理），Claude Code 会注入系统提示。
 - 续问时该 thread 上不能有未结束的任务；`worktree` 与 `thread_id` 不能同用。
 - 子代理加载的是 `~/.codex` 里的全部技能与插件（`skills/list` 可见，含系统技能 `review-agent`、`openai-docs` 等），在 prompt 里写 `$技能名` 或按描述提及即可触发。
-- 模型参数独立于 `~/.codex/config.toml`：默认 `gpt-6-sol` / effort `high` / 服务档 `default`（标准档，不用 Fast）。config.toml 的 `service_tier = "priority"` 只作用于桌面聊天，子代理不继承。每个任务可用 `model` / `effort` 覆盖。
+- 模型参数独立于 `~/.codex/config.toml`：默认 `gpt-6.1-sol` / effort `high` / 服务档 `default`（标准档，不用 Fast）。config.toml 的 `service_tier = "priority"` 只作用于桌面聊天，子代理不继承。每个任务可用 `model` / `effort` 覆盖；`model` 限定为 `gpt-6.1-sol` / `gpt-6-astra` / `gpt-6-sol` / `gpt-6-luna`（界面名 GPT-6.1 Sol / GPT-6 Astra / GPT-6 Sol / GPT-6 Luna），Luna 不支持 `ultra`。
 
 ## 权限
 

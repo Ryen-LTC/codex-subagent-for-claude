@@ -20,7 +20,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-__version__ = "0.2.4"
+__version__ = "0.2.5"
 
 STATE_DIR = Path(os.environ.get("CODEX_SUB_STATE_DIR") or (
     Path(os.environ.get("LOCALAPPDATA", Path.home())) / "codex-sub"))
@@ -28,9 +28,14 @@ LOG_FILE = STATE_DIR / "server.log"
 
 # 子代理的模型参数独立于 ~/.codex/config.toml（桌面聊天可能开着 Fast，子代理走标准档）
 DEFAULT_SANDBOX = os.environ.get("CODEX_SUB_SANDBOX", "danger-full-access")
-DEFAULT_MODEL = os.environ.get("CODEX_SUB_MODEL", "gpt-6-sol")
+DEFAULT_MODEL = os.environ.get("CODEX_SUB_MODEL", "gpt-6.1-sol")
 DEFAULT_EFFORT = os.environ.get("CODEX_SUB_EFFORT", "high")
 DEFAULT_SERVICE_TIER = os.environ.get("CODEX_SUB_SERVICE_TIER", "default")
+
+# 可选模型：Codex 界面显示名 -> app-server 的 model id；Luna 不支持 ultra
+MODELS = ["gpt-6.1-sol", "gpt-6-astra", "gpt-6-sol", "gpt-6-luna"]
+MODEL_DESC = ("GPT-6.1 Sol = gpt-6.1-sol（默认）、GPT-6 Astra = gpt-6-astra、GPT-6 Sol = gpt-6-sol、GPT-6 Luna = gpt-6-luna。"
+              "推理强度都支持 low/medium/high/xhigh/max，前三个还支持 ultra。仅用户明确指定时填")
 
 DEFAULT_WAIT_TIMEOUT = 600
 MAX_WAIT_S = 3000
@@ -39,7 +44,7 @@ RPC_TIMEOUT_S = 60
 RESULT_PREVIEW_CHARS = 6000
 
 # 随 initialize 返回，Claude Code 会注入系统提示
-INSTRUCTIONS = """codex-sub：把任务派给 Codex 子代理（gpt-6-sol），在后台并行执行。
+INSTRUCTIONS = """codex-sub：把任务派给 Codex 子代理（默认 GPT-6.1 Sol，可指定 GPT-6 Astra / Sol / Luna），在后台并行执行。
 何时派：边界清楚、几分钟到几十分钟的独立实现/修复/调研任务；可并行推进的多个子任务；
 需要第二双眼睛审自己的改动时用 codex_review。自己一两步就能做完的事不要派。
 怎么写 prompt：目标、改动范围、完成标准（要跑什么验证）、返回格式（结论 + 文件:行号，不贴大段代码）；续问只发增量指令。
@@ -674,7 +679,7 @@ _SPAWN_SCHEMA = {
         "thread_id": {"type": "string", "description": "续问：在之前某个任务的 thread 上继续，保留全部上下文，只发增量指令"},
         "persist": {"type": "boolean", "description": "把会话持久化到 Codex 历史，以便下次 Claude 会话还能用 thread_id 续问；默认不持久化"},
         "sandbox": {"type": "string", "enum": ["read-only", "danger-full-access"], "description": "默认 danger-full-access（无沙箱）。read-only 会启用 Codex 的 Windows 沙箱，沙箱里任何命令（含 git、python）都执行不了，只在完全不需要跑命令时使用"},
-        "model": {"type": "string", "description": "仅用户明确指定时填，默认 gpt-6-sol"},
+        "model": {"type": "string", "enum": MODELS, "description": MODEL_DESC},
         "effort": {"type": "string", "enum": ["low", "medium", "high", "xhigh", "max", "ultra"], "description": "推理强度，默认 high；简单任务可降到 low/medium"},
         "worktree": {"type": "boolean", "description": "在独立 git worktree（分支 codex-sub/<id>）里执行，多任务并行改同一仓库时用，完成后自行合并分支"},
         "detach": {"type": "boolean", "description": "true = 不关心结果的后台任务；Claude 结束回合时不会因为它被拦下"},
@@ -704,7 +709,7 @@ TOOLS = [
          "cwd": {"type": "string", "description": "git 仓库目录（绝对路径），默认当前目录"},
          "wait_s": {"type": "number", "description": "先同步等待的秒数，审查通常 1~3 分钟；0 立即返回"},
          "sandbox": {"type": "string", "enum": ["read-only", "danger-full-access"], "description": "同 codex_spawn，默认 danger-full-access；审查需要跑 git 等命令，read-only 沙箱下执行不了"},
-         "model": {"type": "string", "description": "仅用户明确指定时填"},
+         "model": {"type": "string", "enum": MODELS, "description": MODEL_DESC},
          "detach": {"type": "boolean", "description": "true = 不关心结果，Claude 结束回合时不等它"}}},
      "annotations": {"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": True}},
     {"name": "codex_wait",
