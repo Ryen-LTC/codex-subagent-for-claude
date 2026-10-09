@@ -104,8 +104,8 @@ def main():
 
     print("[2] 并行首调 / 续问 / 并发续问 / 失败任务")
     c = Client(state)
-    i1 = c.call_async("codex_spawn", prompt="只回复 A", cwd=repo, sandbox="read-only", effort="low", wait_s=120)
-    i2 = c.call_async("codex_spawn", prompt="只回复 B", cwd=repo, sandbox="read-only", effort="low", wait_s=120)
+    i1 = c.call_async("codex_spawn", prompt="只回复 A", cwd=repo, effort="low", wait_s=120)
+    i2 = c.call_async("codex_spawn", prompt="只回复 B", cwd=repo, effort="low", wait_s=120)
     a, ea = c.result(i1)
     b, eb = c.result(i2)
     check(not ea and not eb and "completed" in a and "completed" in b, "两个任务并行首调都完成")
@@ -121,7 +121,7 @@ def main():
     check(not ef and "failed" in f.splitlines()[0], "非法模型 -> 任务 failed 且带错误信息")
 
     print("[3] 中断 / steer / 状态列表")
-    run_txt, _ = c.call("codex_spawn", prompt="从 1 数到 200，每个数字单独一行，慢慢数", cwd=repo, sandbox="read-only", effort="low")
+    run_txt, _ = c.call("codex_spawn", prompt="从 1 数到 200，每个数字单独一行，慢慢数", cwd=repo, effort="low")
     rid = task_of(run_txt)
     steer_txt, es = c.call("codex_steer", id=rid, prompt="别数了，只回复 停")
     check(not es, "steer 已送达")

@@ -23,7 +23,7 @@ Claude Code ──hook──> hook.py：读状态文件，注入完成结果 / S
 
 | 工具 | 作用 |
 |---|---|
-| `codex_spawn(prompt, cwd, wait_s, thread_id, persist, sandbox, model, effort, worktree, detach)` | 派任务，立即返回 id；`wait_s>0` 先等，等到即返回结果；`thread_id` 续问 |
+| `codex_spawn(prompt, cwd, wait_s, thread_id, persist, model, effort, worktree, detach)` | 派任务，立即返回 id；`wait_s>0` 先等，等到即返回结果；`thread_id` 续问 |
 | `codex_review(scope, value, cwd, wait_s)` | Codex 内置代码审查模式（`review/start`，只读、找缺陷）：`uncommitted` / `base_branch` / `commit` / `custom` |
 | `codex_wait(ids, timeout, mode)` | 等待，`mode=any` 任一完成即返回；每 10s 发进度心跳；超时只返回状态，不杀任务 |
 | `codex_status(ids, full)` | 不传 ids 列出全部任务；传 ids 看详情（运行中：最近动作、改动文件、输出预览；已结束：结果，超 6000 字截断，`full=true` 看全文） |
@@ -42,7 +42,7 @@ Claude Code ──hook──> hook.py：读状态文件，注入完成结果 / S
 
 - Claude 侧：工具名 `mcp__codex-sub__codex_*`。未在 `permissions.allow` 放行 `mcp__codex-sub` 时每次调用弹确认。
 - Codex 侧：默认 `sandbox=danger-full-access`（无沙箱）、`approvalPolicy=never`，Codex 发来的审批/追问一律拒绝。`codex_review` 用同样的默认沙箱——审查模式本身不改文件，但要跑 `git` 等命令。默认沙箱由 `CODEX_SUB_SANDBOX` 改。
-- `read-only` 不可用：它和 `workspace-write` 一样会启用 Codex 的 Windows 沙箱，沙箱里任何命令都起不来（`exec_command failed: … setup refresh had errors`），`git`、`python` 全部失败。参数保留只为完整性，工具描述里已标明。
+- 工具不提供按任务选沙箱的参数，只有 `CODEX_SUB_SANDBOX` 改全局默认。`read-only` 和 `workspace-write` 一样会启用 Codex 的 Windows 沙箱，沙箱里任何命令都起不来（`exec_command failed: … setup refresh had errors`），Codex 读文件也靠命令，所以连只读任务都做不了；沙箱在 `thread/start` 时定死，`thread_id` 续问改不了。不开放成参数的原因：Claude 遇到"只读任务"就会选 `read-only`，然后失败。
 - 不用 `workspace-write` 的原因：Codex 的 Windows 沙箱（`[windows] sandbox = "elevated"`）用受限账户跑命令，读不到用户目录下安装的工具（`AppData\Local` 里的 Python、pnpm、uv、npm 全局包在沙箱内都不存在），子代理无法运行测试；官方只提供交互式 `/sandbox-add-read-dir`，无法从 app-server 配置。`workspace-write` 下命令能否联网另由 `[sandbox_workspace_write] network_access` 决定。
 - Codex 内置网页工具在任何 `web_search` 模式、任何沙箱下都经过 OpenAI 服务端抓取层，同一 URL 短时间内返回同一快照，带参数的 URL 和冷门站点拿不到；要真正实时抓取需让子代理跑 `curl`。
 

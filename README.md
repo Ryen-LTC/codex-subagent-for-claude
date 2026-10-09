@@ -67,7 +67,7 @@ Just talk to Claude; it knows when to delegate:
 
 | Tool | Purpose |
 |---|---|
-| `codex_spawn` | Dispatch a task. `wait_s` waits a while first, `thread_id` continues a thread, `worktree` runs in a separate branch, `sandbox` / `model` / `effort` override per task |
+| `codex_spawn` | Dispatch a task. `wait_s` waits a while first, `thread_id` continues a thread, `worktree` runs in a separate branch, `model` / `effort` override per task |
 | `codex_review` | Code review: uncommitted changes / against a base branch / a commit / custom instructions |
 | `codex_wait` | Wait for results; a timeout only returns the current state, the task keeps running |
 | `codex_status` | List tasks, or show one task's details and full output |
@@ -81,7 +81,7 @@ Just talk to Claude; it knows when to delegate:
 
 Subagents run **without a sandbox** (`sandbox=danger-full-access`) and **without approvals** (`approvalPolicy=never`) by default: they can edit any file and run any command without stopping to ask, and the occasional question that would need a human answer is skipped so the task never hangs waiting for one. The reason: Codex's Windows sandbox runs commands under a restricted account that cannot see tools installed in the user profile (Python, pnpm, uv, …), so a sandboxed subagent can't even run tests.
 
-`codex_review` uses the same default: review mode itself does not modify files, but it needs to run `git` and similar commands. `sandbox=read-only` is accepted but not useful on Windows — it enables the same restricted sandbox, inside which no command can start at all.
+`codex_review` uses the same default: review mode itself does not modify files, but it needs to run `git` and similar commands. There is no per-task sandbox option: `read-only` enables the same restricted sandbox, inside which no command can start, so Codex cannot even read files. The default can be changed with `CODEX_SUB_SANDBOX`.
 
 ## Configuration
 

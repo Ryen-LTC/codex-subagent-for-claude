@@ -20,7 +20,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-__version__ = "0.2.5"
+__version__ = "0.2.6"
 
 STATE_DIR = Path(os.environ.get("CODEX_SUB_STATE_DIR") or (
     Path(os.environ.get("LOCALAPPDATA", Path.home())) / "codex-sub"))
@@ -581,11 +581,11 @@ def tool_spawn(a: Dict[str, Any], progress: Any = None) -> str:
                                          "input": [{"type": "text", "text": prompt}]})
         return res["turn"]["id"]
 
-    return _launch(a, prompt, a.get("sandbox") or DEFAULT_SANDBOX, start, progress)
+    return _launch(a, prompt, DEFAULT_SANDBOX, start, progress)
 
 
 def tool_review(a: Dict[str, Any], progress: Any = None) -> str:
-    """Codex 内置代码审查模式（等价于 codex review），固定只读。"""
+    """Codex 内置代码审查模式（等价于 codex review）：找缺陷，不改文件。"""
     scope = a.get("scope") or "uncommitted"
     value = a.get("value") or ""
     targets = {
@@ -603,7 +603,7 @@ def tool_review(a: Dict[str, Any], progress: Any = None) -> str:
         res = APP.request("review/start", {"threadId": task.thread_id, "target": targets[scope](), "delivery": "inline"})
         return res["turn"]["id"]
 
-    return _launch(dict(a, thread_id=None), f"[review:{scope}] {value}".strip(), a.get("sandbox") or DEFAULT_SANDBOX, start, progress)
+    return _launch(dict(a, thread_id=None), f"[review:{scope}] {value}".strip(), DEFAULT_SANDBOX, start, progress)
 
 
 def _wait(tasks: List[Task], timeout: float, progress: Any, mode: str = "all") -> None:
@@ -678,7 +678,6 @@ _SPAWN_SCHEMA = {
         "wait_s": {"type": "number", "description": "先同步等待这么多秒；估计几分钟内能完成的任务填 120~300 可直接拿到结果，长任务填 0 立即返回"},
         "thread_id": {"type": "string", "description": "续问：在之前某个任务的 thread 上继续，保留全部上下文，只发增量指令"},
         "persist": {"type": "boolean", "description": "把会话持久化到 Codex 历史，以便下次 Claude 会话还能用 thread_id 续问；默认不持久化"},
-        "sandbox": {"type": "string", "enum": ["read-only", "danger-full-access"], "description": "默认 danger-full-access（无沙箱）。read-only 会启用 Codex 的 Windows 沙箱，沙箱里任何命令（含 git、python）都执行不了，只在完全不需要跑命令时使用"},
         "model": {"type": "string", "enum": MODELS, "description": MODEL_DESC},
         "effort": {"type": "string", "enum": ["low", "medium", "high", "xhigh", "max", "ultra"], "description": "推理强度，默认 high；简单任务可降到 low/medium"},
         "worktree": {"type": "boolean", "description": "在独立 git worktree（分支 codex-sub/<id>）里执行，多任务并行改同一仓库时用，完成后自行合并分支"},
@@ -708,7 +707,6 @@ TOOLS = [
          "value": {"type": "string", "description": "scope 对应的值：分支名 / commit sha / 自定义审查说明；uncommitted 不需要"},
          "cwd": {"type": "string", "description": "git 仓库目录（绝对路径），默认当前目录"},
          "wait_s": {"type": "number", "description": "先同步等待的秒数，审查通常 1~3 分钟；0 立即返回"},
-         "sandbox": {"type": "string", "enum": ["read-only", "danger-full-access"], "description": "同 codex_spawn，默认 danger-full-access；审查需要跑 git 等命令，read-only 沙箱下执行不了"},
          "model": {"type": "string", "enum": MODELS, "description": MODEL_DESC},
          "detach": {"type": "boolean", "description": "true = 不关心结果，Claude 结束回合时不等它"}}},
      "annotations": {"readOnlyHint": False, "destructiveHint": False, "idempotentHint": False, "openWorldHint": True}},

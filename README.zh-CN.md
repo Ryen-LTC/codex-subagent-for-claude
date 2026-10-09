@@ -67,7 +67,7 @@ claude mcp add codex-sub -s user -- python "<安装目录>\server.py"
 
 | 工具 | 作用 |
 |---|---|
-| `codex_spawn` | 派任务。`wait_s` 先等一会儿，`thread_id` 续问，`worktree` 在独立分支里干，`sandbox` / `model` / `effort` 按任务覆盖 |
+| `codex_spawn` | 派任务。`wait_s` 先等一会儿，`thread_id` 续问，`worktree` 在独立分支里干，`model` / `effort` 按任务覆盖 |
 | `codex_review` | 代码审查：未提交改动 / 相对基准分支 / 某个提交 / 自定义说明 |
 | `codex_wait` | 等结果，超时只返回状态不杀任务 |
 | `codex_status` | 列任务，或看某个任务的详情和全文 |
@@ -81,7 +81,7 @@ claude mcp add codex-sub -s user -- python "<安装目录>\server.py"
 
 子代理默认**不带沙箱**（`sandbox=danger-full-access`）且**不审批**（`approvalPolicy=never`）：能改任何文件、跑任何命令，不会停下来问你；偶尔遇到需要人回答的追问会自动跳过，让它自己决定，任务不会卡住等人。这么设是因为 Codex 的 Windows 沙箱用受限账户执行命令，读不到装在用户目录下的 Python、pnpm、uv 等工具，子代理连测试都跑不了。
 
-`codex_review` 用同样的默认：审查模式本身不改文件，但要跑 `git` 等命令。`sandbox=read-only` 参数可以传，但在 Windows 上没有用——它启用的是同一个受限沙箱，沙箱里任何命令都起不来。
+`codex_review` 用同样的默认：审查模式本身不改文件，但要跑 `git` 等命令。没有按任务选沙箱的参数：`read-only` 启用的是同一个受限沙箱，沙箱里任何命令都起不来，Codex 连读文件都做不到。默认沙箱可用 `CODEX_SUB_SANDBOX` 改。
 
 ## 配置
 
